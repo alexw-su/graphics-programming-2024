@@ -1,5 +1,14 @@
+// Includes Core
 #include <ituGL/core/DeviceGL.h>
+
+// Includes Application
 #include <ituGL/application/Window.h>
+
+// Includes Geometry
+#include <ituGL/geometry/VertexBufferObject.h>
+#include <ituGL/geometry/VertexArrayObject.h>
+#include <ituGL/geometry/VertexAttribute.h>
+
 #include <iostream>
 
 int buildShaderProgram();
@@ -18,6 +27,7 @@ int main()
     // glfw window creation
     // --------------------
     Window window(SCR_WIDTH, SCR_HEIGHT, "LearnOpenGL");
+
     if (!window.IsValid())
     {
         std::cout << "Failed to create GLFW window" << std::endl;
@@ -45,24 +55,25 @@ int main()
          0.0f,  0.5f, 0.0f  // top   
     };
 
-    unsigned int VBO, VAO;
-    glGenVertexArrays(1, &VAO);
-    glGenBuffers(1, &VBO);
+    // unsigned int VBO, VAO;
+    VertexArrayObject vao;
+    VertexBufferObject vbo;
+
     // bind the Vertex Array Object first, then bind and set vertex buffer(s), and then configure vertex attributes(s).
-    glBindVertexArray(VAO);
+    vao.Bind();
+    vbo.Bind();
 
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
+    vbo.AllocateData({ reinterpret_cast<const std::byte*>(vertices), sizeof(vertices) });
 
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
-    glEnableVertexAttribArray(0);
+    VertexAttribute position(Data::Type::Float, 3, false);
+    vao.SetAttribute(0, position, 3 * sizeof(float));
 
     // note that this is allowed, the call to glVertexAttribPointer registered VBO as the vertex attribute's bound vertex buffer object so afterwards we can safely unbind
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 
     // You can unbind the VAO afterwards so other VAO calls won't accidentally modify this VAO, but this rarely happens. Modifying other
     // VAOs requires a call to glBindVertexArray anyways so we generally don't unbind VAOs (nor VBOs) when it's not directly necessary.
-    glBindVertexArray(0);
+    vao.Unbind();
 
 
     // uncomment this call to draw in wireframe polygons.
@@ -82,7 +93,7 @@ int main()
 
         // draw our first triangle
         glUseProgram(shaderProgram);
-        glBindVertexArray(VAO); // seeing as we only have a single VAO there's no need to bind it every time, but we'll do so to keep things a bit more organized
+        vao.Bind(); // seeing as we only have a single VAO there's no need to bind it every time, but we'll do so to keep things a bit more organized
         glDrawArrays(GL_TRIANGLES, 0, 3);
         // glBindVertexArray(0); // no need to unbind it every time 
 
@@ -94,8 +105,7 @@ int main()
 
     // optional: de-allocate all resources once they've outlived their purpose:
     // ------------------------------------------------------------------------
-    glDeleteVertexArrays(1, &VAO);
-    glDeleteBuffers(1, &VBO);
+
     glDeleteProgram(shaderProgram);
 
     // glfw: terminate, clearing all previously allocated GLFW resources.
