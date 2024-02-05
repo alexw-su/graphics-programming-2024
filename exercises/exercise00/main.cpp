@@ -10,6 +10,8 @@
 #include <ituGL/geometry/VertexAttribute.h>
 #include <ituGL/geometry/ElementBufferObject.h>
 
+#include <vector>
+
 #include <iostream>
 
 int buildShaderProgram();
@@ -52,17 +54,31 @@ int main()
 
     // set up vertex data (and buffer(s)) and configure vertex attributes
     // ------------------------------------------------------------------
-    float vertices[] = {
-        -0.5f, -0.5f, 0.0f, // bottom left
-         0.5f, -0.5f, 0.0f, // bottom right
-        -0.5f,  0.5f, 0.0f, // top left
-         0.5f,  0.5f, 0.0f  // top right
-    };
+    const float radius = 0.5f;
+    const int numSegments = 16;
+    const float segmentAngle = (2 * 3.14159) / numSegments;
 
-    unsigned int indices[] = {
-        0, 1, 2, // Triangle 1
-        1, 2, 3  // Triangle 2
-    };
+    // Generate vertices for the circle
+    std::vector<float> circleVertices;
+    circleVertices.push_back(0.0f); // Center vertex
+    circleVertices.push_back(0.0f);
+    circleVertices.push_back(0.0f);
+
+    for (int i = 0; i < numSegments; ++i) {
+        float x = radius * cos(i * segmentAngle);
+        float y = radius * sin(i * segmentAngle);
+        circleVertices.push_back(x);
+        circleVertices.push_back(y);
+        circleVertices.push_back(0.0f);
+    }
+
+    // Generate indices for the circle
+    std::vector<unsigned int> circleIndices;
+    for (int i = 1; i <= numSegments; ++i) {
+        circleIndices.push_back(0); // Center vertex index
+        circleIndices.push_back(i);
+        circleIndices.push_back(i % numSegments + 1);
+    }
 
     // unsigned int VBO, VAO;
     VertexArrayObject vao;
@@ -71,13 +87,12 @@ int main()
 
     // bind the Vertex Array Object first, then bind and set vertex buffer(s), and then configure vertex attributes(s).
     vao.Bind();
-    
-    auto indiceCount = sizeof(indices) / sizeof(unsigned int);
+
     ebo.Bind();
-    ebo.AllocateData<unsigned int>({ indices, indiceCount });
+    ebo.AllocateData<unsigned int>({ circleIndices.data(), circleIndices.size() });
 
     vbo.Bind();
-    vbo.AllocateData({ reinterpret_cast<const std::byte*>(vertices), sizeof(vertices) });
+    vbo.AllocateData({ reinterpret_cast<const std::byte*>(circleVertices.data()), circleVertices.size() * sizeof(float) });
 
     VertexAttribute position(Data::Type::Float, 3, false);
     vao.SetAttribute(0, position, 3 * sizeof(float));
@@ -100,19 +115,19 @@ int main()
         // update
         // -----
         float angle = time * rotationSpeed;
-        int numVertices = sizeof(vertices) / sizeof(vertices[0]) / 3;
+        int numVertices = sizeof(circleVertices) / sizeof(circleVertices[0]) / 3;
         
         // Update the VBO with the rotated vertices
         for (int i = 0; i < numVertices; ++i) {
             // Rotate vertex positions
-            float x = vertices[i * 3];
-            float y = vertices[i * 3 + 1];
+            float x = circleVertices[i * 3];
+            float y = circleVertices[i * 3 + 1];
             float newX = x * cos(angle) - y * sin(angle);
             float newY = x * sin(angle) + y * cos(angle);
 
             // Update vertex
-            vertices[i * 3] = newX;
-            vertices[i * 3 + 1] = newY;
+            circleVertices[i * 3] = newX;
+            circleVertices[i * 3 + 1] = newY;
         }
 
 
@@ -130,9 +145,9 @@ int main()
         vao.Bind(); // seeing as we only have a single VAO there's no need to bind it every time, but we'll do so to keep things a bit more organized
         
         vbo.Bind();
-        vbo.UpdateData({ reinterpret_cast<const std::byte*>(vertices), sizeof(vertices) });
+        //vbo.UpdateData({ reinterpret_cast<const std::byte*>(circleVertices), sizeof(circleVertices) });
         
-        glDrawElements(GL_TRIANGLES, indiceCount, GL_UNSIGNED_INT, 0);
+        glDrawElements(GL_TRIANGLES, circleIndices.size(), GL_UNSIGNED_INT, 0);
 
         // glBindVertexArray(0); // no need to unbind it every time 
 
