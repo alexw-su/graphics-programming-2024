@@ -50,9 +50,12 @@ int main()
     // set up vertex data (and buffer(s)) and configure vertex attributes
     // ------------------------------------------------------------------
     float vertices[] = {
-        -0.5f, -0.5f, 0.0f, // left  
-         0.5f, -0.5f, 0.0f, // right 
-         0.0f,  0.5f, 0.0f  // top   
+        -0.5f, -0.5f, 0.0f, // left 1
+         0.5f, -0.5f, 0.0f, // right 1
+        -0.5f,  0.5f, 0.0f, // top 1
+        -0.5f,  0.5f, 0.0f, // left 2
+         0.5f,  0.5f, 0.0f, // right 2
+         0.5f, -0.5f, 0.0f  // top 2
     };
 
     // unsigned int VBO, VAO;
@@ -94,7 +97,7 @@ int main()
         // draw our first triangle
         glUseProgram(shaderProgram);
         vao.Bind(); // seeing as we only have a single VAO there's no need to bind it every time, but we'll do so to keep things a bit more organized
-        glDrawArrays(GL_TRIANGLES, 0, 3);
+        glDrawArrays(GL_TRIANGLES, 0, 6);
         // glBindVertexArray(0); // no need to unbind it every time 
 
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
