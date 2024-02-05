@@ -17,13 +17,15 @@ void processInput(GLFWwindow* window);
 
 // settings
 const unsigned int SCR_WIDTH = 800;
-const unsigned int SCR_HEIGHT = 600;
+const unsigned int SCR_HEIGHT = 800;
 
 int main()
 {
     // glfw: initialize and configure
     // ------------------------------
     DeviceGL deviceGL;
+    float time = 0.0f;
+    float rotationSpeed = 0.1f;
 
     // glfw window creation
     // --------------------
@@ -95,6 +97,25 @@ int main()
     // -----------
     while (!window.ShouldClose())
     {
+        // update
+        // -----
+        float angle = time * rotationSpeed;
+        int numVertices = sizeof(vertices) / sizeof(vertices[0]) / 3;
+        
+        // Update the VBO with the rotated vertices
+        for (int i = 0; i < numVertices; ++i) {
+            // Rotate vertex positions
+            float x = vertices[i * 3];
+            float y = vertices[i * 3 + 1];
+            float newX = x * cos(angle) - y * sin(angle);
+            float newY = x * sin(angle) + y * cos(angle);
+
+            // Update vertex
+            vertices[i * 3] = newX;
+            vertices[i * 3 + 1] = newY;
+        }
+
+
         // input
         // -----
         processInput(window.GetInternalWindow());
@@ -103,9 +124,14 @@ int main()
         // ------
         deviceGL.Clear(1.0f, 0.0f, 1.0f, 1.0f);
 
-        // draw our first triangle
+        // draw our triangle
         glUseProgram(shaderProgram);
+        
         vao.Bind(); // seeing as we only have a single VAO there's no need to bind it every time, but we'll do so to keep things a bit more organized
+        
+        vbo.Bind();
+        vbo.UpdateData({ reinterpret_cast<const std::byte*>(vertices), sizeof(vertices) });
+        
         glDrawElements(GL_TRIANGLES, indiceCount, GL_UNSIGNED_INT, 0);
 
         // glBindVertexArray(0); // no need to unbind it every time 
@@ -114,6 +140,7 @@ int main()
         // -------------------------------------------------------------------------------
         window.SwapBuffers();
         deviceGL.PollEvents();
+        time += 0.1;
     }
 
     // optional: de-allocate all resources once they've outlived their purpose:
