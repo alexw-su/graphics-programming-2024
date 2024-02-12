@@ -58,29 +58,29 @@ void TerrainApplication::Initialize()
         for (float y = 0; y < m_gridY; y++) 
         {
             // First Triangle Vertices
-            positions.push_back(x);
-            positions.push_back(y);
+            positions.push_back(x / m_gridX - 0.5f);
+            positions.push_back(y / m_gridY - 0.5f);
             positions.push_back(0.0f);
 
-            positions.push_back(x);
-            positions.push_back(y + 1);
+            positions.push_back(x / m_gridX - 0.5f);
+            positions.push_back((y + 1) / m_gridY - 0.5f);
             positions.push_back(0.0f);
 
-            positions.push_back(x + 1);
-            positions.push_back(y + 1);
+            positions.push_back((x + 1) / m_gridX - 0.5f);
+            positions.push_back((y + 1) / m_gridY - 0.5f);
             positions.push_back(0.0f);
 
             // Second Triangle Vertices
-            positions.push_back(x);
-            positions.push_back(y);
+            positions.push_back(x / m_gridX - 0.5f);
+            positions.push_back(y / m_gridY - 0.5f);
             positions.push_back(0.0f);
 
-            positions.push_back(x + 1);
-            positions.push_back(y + 1);
+            positions.push_back((x + 1) / m_gridX - 0.5f);
+            positions.push_back((y + 1) / m_gridY - 0.5f);
             positions.push_back(0.0f);
 
-            positions.push_back(x+1);
-            positions.push_back(y);
+            positions.push_back((x + 1) / m_gridX - 0.5f);
+            positions.push_back(y / m_gridY - 0.5f);
             positions.push_back(0.0f);
         }
     }
