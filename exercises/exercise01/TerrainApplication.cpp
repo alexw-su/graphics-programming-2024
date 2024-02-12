@@ -1,9 +1,16 @@
 #include "TerrainApplication.h"
 
 // (todo) 01.1: Include the libraries you need
+#include <ituGL/geometry/VertexBufferObject.h>
+#include <ituGL/geometry/VertexArrayObject.h>
+#include <ituGL/geometry/VertexAttribute.h>
+#include <ituGL/geometry/ElementBufferObject.h>
 
 #include <cmath>
 #include <iostream>
+#include <vector>
+#include <list>
+int vertexCounter = 0;
 
 // Helper structures. Declared here only for this exercise
 struct Vector2
@@ -43,13 +50,49 @@ void TerrainApplication::Initialize()
     BuildShaders();
 
     // (todo) 01.1: Create containers for the vertex position
-
+    std::vector<float> positions;
 
     // (todo) 01.1: Fill in vertex data
+    for (float x = 0; x < m_gridX; x++)
+    { 
+        for (float y = 0; y < m_gridY; y++) 
+        {
+            // First Triangle Vertices
+            positions.push_back(x);
+            positions.push_back(y);
+            positions.push_back(0.0f);
 
+            positions.push_back(x);
+            positions.push_back(y + 1);
+            positions.push_back(0.0f);
+
+            positions.push_back(x + 1);
+            positions.push_back(y + 1);
+            positions.push_back(0.0f);
+
+            // Second Triangle Vertices
+            positions.push_back(x);
+            positions.push_back(y);
+            positions.push_back(0.0f);
+
+            positions.push_back(x + 1);
+            positions.push_back(y + 1);
+            positions.push_back(0.0f);
+
+            positions.push_back(x+1);
+            positions.push_back(y);
+            positions.push_back(0.0f);
+        }
+    }
 
     // (todo) 01.1: Initialize VAO, and VBO
-
+    vao.Bind();
+    vbo.Bind();
+    vbo.AllocateData<float>(positions);
+    
+    vertexCounter = positions.size() / 3;
+    VertexAttribute position(Data::Type::Float, 3);
+    vao.SetAttribute(0, position, 0);
 
     // (todo) 01.5: Initialize EBO
 
@@ -79,7 +122,7 @@ void TerrainApplication::Render()
     glUseProgram(m_shaderProgram);
 
     // (todo) 01.1: Draw the grid
-
+    glDrawArrays(GL_TRIANGLES, 0, vertexCounter);
 }
 
 void TerrainApplication::Cleanup()
