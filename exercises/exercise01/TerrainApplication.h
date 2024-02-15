@@ -25,8 +25,6 @@ private:
 
 private:
     unsigned int m_gridX, m_gridY;
-
-
     unsigned int m_shaderProgram;
 
     // (todo) 01.1: Declare an VBO, VAO
@@ -34,5 +32,5 @@ private:
     VertexBufferObject vbo;
 
     // (todo) 01.5: Declare an EBO
-
+    ElementBufferObject ebo;
 };
