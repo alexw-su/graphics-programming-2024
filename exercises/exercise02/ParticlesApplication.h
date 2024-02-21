@@ -26,7 +26,7 @@ private:
     void LoadAndCompileShader(Shader& shader, const char* path);
 
     // Emit a new particle
-    void EmitParticle(const glm::vec2& position, float size, float duration, Color color);
+    void EmitParticle(const glm::vec2& position, float size, float duration, Color color, glm::vec2& velocity);
 
     // Helper methods for random values
     static float Random01();
@@ -55,4 +55,7 @@ private:
 
     // Current Time Uniform location
     ShaderProgram::Location m_currentTimeUniform;
+
+    // Gravity Uniform location
+    ShaderProgram::Location m_gravityUniform;
 };
