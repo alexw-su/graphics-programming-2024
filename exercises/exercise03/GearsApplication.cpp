@@ -92,7 +92,7 @@ void GearsApplication::Render()
         glm::translate(glm::vec3(0.0f, 0.2f, 0.0f)) *
         glm::rotate(speed * time * linkedRatio, axis)
     );
-    DrawGear(m_smallGear, linkedGearMatrix * centerGearMatrix, Color(1.0f, 1.0f, 0.0f));
+    DrawGear(m_smallGear, centerGearMatrix * linkedGearMatrix, Color(1.0f, 1.0f, 0.0f));
 
     Application::Render();
 }
