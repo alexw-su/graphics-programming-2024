@@ -66,11 +66,12 @@ void TexturedTerrainApplication::Render()
     GetDevice().Clear(true, Color(0.0f, 0.0f, 0.0f, 1.0f), true, 1.0f);
 
     // Terrain patches
-    DrawObject(m_terrainPatch, *m_terrainMaterial, glm::scale(glm::vec3(10.0f)));
-
+    DrawObject(m_terrainPatch, *m_terrainMaterial00, glm::scale(glm::vec3(10.0f)));
 
     // (todo) 04.2: Add more patches here
-    
+    DrawObject(m_terrainPatch, *m_terrainMaterial10, glm::translate(glm::vec3(-10.0f,0,0)) * glm::scale(glm::vec3(10.0f)));
+    DrawObject(m_terrainPatch, *m_terrainMaterial01, glm::translate(glm::vec3(0, 0, -10.0f)) * glm::scale(glm::vec3(10.0f)));
+    DrawObject(m_terrainPatch, *m_terrainMaterial11, glm::translate(glm::vec3(-10.0f, 0, -10.0f)) * glm::scale(glm::vec3(10.0f)));
 
     // Water patches
     // (todo) 04.5: Add water planes
@@ -80,7 +81,12 @@ void TexturedTerrainApplication::Render()
 void TexturedTerrainApplication::InitializeTextures()
 {
     m_defaultTexture = CreateDefaultTexture();
+
     m_heightmapTexture00 = CreateHeightMap(m_gridX, m_gridY, glm::ivec2(0,0));
+
+    m_heightmapTexture01 = CreateHeightMap(m_gridX, m_gridY, glm::ivec2(0, -1));
+    m_heightmapTexture10 = CreateHeightMap(m_gridX, m_gridY, glm::ivec2(-1, 0));
+    m_heightmapTexture11 = CreateHeightMap(m_gridX, m_gridY, glm::ivec2(-1, -1));
 
     // (todo) 04.3: Load terrain textures here
 
@@ -108,9 +114,18 @@ void TexturedTerrainApplication::InitializeMaterials()
     terrainShaderProgram->Build(terrainVS, terrainFS);
 
     // Terrain material
-    m_terrainMaterial = std::make_shared<Material>(terrainShaderProgram);
-    m_terrainMaterial->SetUniformValue("Color", glm::vec4(1.0f));
+    m_terrainMaterial00 = std::make_shared<Material>(terrainShaderProgram);
+    m_terrainMaterial00->SetUniformValue("Color", glm::vec4(1.0f));
+    m_terrainMaterial00->SetUniformValue("Heightmap", m_heightmapTexture00);
+    
+    m_terrainMaterial10 = std::make_shared<Material>(*m_terrainMaterial00);
+    m_terrainMaterial10->SetUniformValue("Heightmap", m_heightmapTexture10);
 
+    m_terrainMaterial01 = std::make_shared<Material>(*m_terrainMaterial00);
+    m_terrainMaterial01->SetUniformValue("Heightmap", m_heightmapTexture01);
+
+    m_terrainMaterial11 = std::make_shared<Material>(*m_terrainMaterial00);
+    m_terrainMaterial11->SetUniformValue("Heightmap", m_heightmapTexture11);
 
     // (todo) 04.5: Add water shader and material here
 
