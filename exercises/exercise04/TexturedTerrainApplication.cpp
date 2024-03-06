@@ -88,7 +88,7 @@ void TexturedTerrainApplication::InitializeTextures()
     m_heightmapTexture11 = CreateHeightMap(m_gridX, m_gridY, glm::ivec2(-1, -1));
 
     // (todo) 04.3: Load terrain textures here
-    m_grassTexture = LoadTexture("texture/grass.jpg");
+    m_grassTexture = LoadTexture("textures/grass.jpg");
 
     // (todo) 04.5: Load water texture here
 
@@ -116,7 +116,7 @@ void TexturedTerrainApplication::InitializeMaterials()
     m_terrainMaterial00 = std::make_shared<Material>(terrainShaderProgram);
     m_terrainMaterial00->SetUniformValue("Color", glm::vec4(1.0f));
     m_terrainMaterial00->SetUniformValue("Heightmap", m_heightmapTexture00);
-    m_terrainMaterial00->SetUniformValue("ColorTexture", *m_grassTexture);
+    m_terrainMaterial00->SetUniformValue("ColorTexture", m_grassTexture);
     m_terrainMaterial00->SetUniformValue("ColorTextureScale", glm::vec2(0.125f));
 
     // Terrain heightmap
