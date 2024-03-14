@@ -148,5 +148,44 @@ Shader "CG2024/CelShading"
 
             ENDGLSL
         }
+        Pass
+        {
+            Name "OUTLINE"
+            Tags { "LightMode" = "ForwardBase" }
+            Cull Front
+            GLSLPROGRAM
+
+            struct vertexToFragment
+            {
+                vec3 worldPos;
+                vec3 normal;
+                vec2 texCoords;
+            };
+
+            #ifdef VERTEX
+            out vertexToFragment v2f;
+
+            void main()
+            {
+                v2f.worldPos = (unity_ObjectToWorld * gl_Vertex).xyz;
+                v2f.normal = (unity_ObjectToWorld * vec4(gl_Normal, 1.0f)).xyz;
+                v2f.worldPos += (v2f.normal * 0.02f);  
+
+                gl_Position = unity_MatrixVP * vec4(v2f.worldPos, 1.0f);
+            }
+            #endif // VERTEX
+
+            #ifdef FRAGMENT
+            in vertexToFragment v2f;
+
+            void main()
+            {
+
+                gl_FragColor = vec4(vec3(0.0f), 1.0f);
+            }
+            #endif // FRAGMENT
+
+            ENDGLSL
+        }
     }
 }
