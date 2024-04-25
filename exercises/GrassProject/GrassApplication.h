@@ -11,15 +11,26 @@
 
 class Texture2DObject;
 
-class TexturedTerrainApplication : public Application
+class GrassApplication : public Application
 {
 public:
-    TexturedTerrainApplication();
+    GrassApplication();
 
 protected:
     void Initialize() override;
     void Update() override;
     void Render() override;
+    void Cleanup() override;
+
+    // Skybox and Lights
+    void InitializeCamera();
+    void InitializeLights();
+    void InitializeMaterial();
+    void InitializeModels();
+    void InitializeRenderer();
+
+    // UI
+    void RenderGUI();
 
 private:
     void InitializeTextures();
@@ -61,4 +72,24 @@ private:
     std::shared_ptr<Texture2DObject> m_rockTexture;
     std::shared_ptr<Texture2DObject> m_snowTexture;
     std::shared_ptr<Texture2DObject> m_waterTexture;
+
+
+    // Skybox ___________________________
+    // Helper object for debug GUI
+    DearImGui m_imGui;
+
+    // Camera controller
+    CameraController m_cameraController;
+
+    // Global scene
+    Scene m_scene;
+
+    // Renderer
+    Renderer m_renderer;
+
+    // Skybox texture
+    std::shared_ptr<TextureCubemapObject> m_skyboxTexture;
+
+    // Default material
+    std::shared_ptr<Material> m_defaultMaterial;
 };
