@@ -8,16 +8,25 @@ out vec4 FragColor;
 
 uniform vec4 Color;
 
-const vec4 dark_green = vec4(0.0f, 0.4f, 0.0f, 1.0f);
-const vec4 light_green = vec4(0.5f, 1.0f, 0.0f, 1.0f);
-
-const vec4 grass_colors[3] = vec4[3](
-	dark_green,
-	dark_green,
-	light_green
-);
+const vec4 base_green = vec4(0.0f, 0.4f, 0.0f, 1.0f);
+const vec4 middle_green = vec4(0.35f, 0.75f, 0.0f, 1.0f);
+const vec4 tip_green = vec4(0.5f, 1.0f, 0.0f, 1.0f);
 
 void main()
 {
-	FragColor = gras;
+    float heightFactor = (WorldPosition.y + 1.0) / 2.0; // Normalize the height to [0, 1]
+    vec4 grassColor;
+    
+    if (heightFactor <= 0.5) {
+        // Interpolate between color1 and color2 for the base and middle part of the grass blade
+        grassColor = mix(base_green, middle_green, heightFactor * 2.0);
+    } 
+    else 
+    {
+        // Interpolate between color2 and color3 for the tip of the grass blade
+        grassColor = mix(middle_green, tip_green, (heightFactor - 0.5) * 2.0);
+    }
+    
+    // Output the final color
+    FragColor = grassColor;
 }

@@ -1,37 +1,32 @@
 #version 330 core
 
+// Input
 layout (location = 0) in vec3 VertexPosition;
 layout (location = 1) in vec3 VertexNormal;
-layout (location = 2) in vec2 VertexTexCoord;
 
+// Output
 out vec3 WorldPosition;
 out vec3 WorldNormal;
-out vec2 TexCoord;
 
+// Uniforms
 uniform mat4 WorldMatrix;
 uniform mat4 ViewProjMatrix;
+uniform mat4 grassBlade;
 
-uniform mat4 model;
-uniform mat4 view;
-uniform mat4 projection;
-uniform float amplitude;
-uniform float frequency;
-uniform float phase;
-uniform float grass_scale;
+uniform vec3 offsets[100];
 
-const vec3 grass_vertices[3] = vec3[3](
-	vec3(0.5f, 0.0f, 0.0f),
-	vec3(-0.5f, 0.0f, 0.0f),
-	vec3(0.0f, 1.0f, 0.0f)
-);
+uniform float time; // Time parameter for animation
 
 
 void main()
 {
+    vec3 offset = offsets[gl_InstanceID];
 
+	// Transform vertex position and normal to world space
+    vec4 worldPos = (VertexPosition + offset, 1.0);
+    
+    vec3 worldNormal = mat3(transpose(inverse(grassBlade))) * VertexNormal;
 
-	WorldPosition = (WorldMatrix * vec4(VertexPosition, 1.0)).xyz;
-	WorldNormal = (WorldMatrix * vec4(VertexNormal, 0.0)).xyz;
-	TexCoord = VertexTexCoord;
-	gl_Position = ViewProjMatrix * vec4(WorldPosition, 1.0);
+    // Pass transformed vertex position and normal to the geometry shader
+    gl_Position = worldPos;
 }
