@@ -2,15 +2,15 @@
 
 in vec3 WorldPosition;
 in vec3 WorldNormal;
-in vec2 TexCoord;
+in float Height;
 
 out vec4 FragColor;
 
-uniform vec4 Color;
+uniform vec4 baseColor;
+uniform vec4 tipColor;
 
-const vec4 base_green = vec4(0.0f, 0.4f, 0.0f, 1.0f);
-const vec4 middle_green = vec4(0.35f, 0.75f, 0.0f, 1.0f);
-const vec4 tip_green = vec4(0.5f, 1.0f, 0.0f, 1.0f);
+// const vec4 base_green =   vec4(0.0f, 0.4f, 0.0f, 1.0f);
+// const vec4 tip_green =    vec4(0.5f, 1.0f, 0.0f, 1.0f);
 
 void main()
 {
@@ -19,12 +19,14 @@ void main()
     
     if (heightFactor <= 0.5) {
         // Interpolate between color1 and color2 for the base and middle part of the grass blade
-        grassColor = mix(base_green, middle_green, heightFactor * 2.0);
+        // grassColor = mix(base_green, middle_green, heightFactor * 2.0);
+        grassColor = baseColor;
     } 
     else 
     {
         // Interpolate between color2 and color3 for the tip of the grass blade
-        grassColor = mix(middle_green, tip_green, (heightFactor - 0.5) * 2.0);
+        // grassColor = mix(middle_green, tip_green, (heightFactor - 0.5) * 2.0);
+        grassColor = tipColor;
     }
     
     // Output the final color

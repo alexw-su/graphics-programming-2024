@@ -1,7 +1,7 @@
-#include "TexturedTerrainApplication.h"
+#include "GrassApplication.h"
 
 int main()
 {
-    TexturedTerrainApplication texturedTerrainApplication;
-    return texturedTerrainApplication.Run();
+    GrassApplication app;
+    return app.Run();
 }

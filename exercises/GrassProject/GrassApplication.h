@@ -20,17 +20,10 @@ protected:
     void Initialize() override;
     void Update() override;
     void Render() override;
-    void Cleanup() override;
 
-    // Skybox and Lights
-    void InitializeCamera();
-    void InitializeLights();
-    void InitializeMaterial();
-    void InitializeModels();
-    void InitializeRenderer();
+    // Grass Implementation
+    void InitializeGrass();
 
-    // UI
-    void RenderGUI();
 
 private:
     void InitializeTextures();
@@ -44,6 +37,9 @@ private:
     std::shared_ptr<Texture2DObject> LoadTexture(const char* path);
 
     void CreateTerrainMesh(Mesh& mesh, unsigned int gridX, unsigned int gridY);
+
+    // Method for making the grass blade
+    void CreateGrassMesh(Mesh& mesh, float height);
 
 private:
     unsigned int m_gridX, m_gridY;
@@ -73,23 +69,10 @@ private:
     std::shared_ptr<Texture2DObject> m_snowTexture;
     std::shared_ptr<Texture2DObject> m_waterTexture;
 
-
-    // Skybox ___________________________
-    // Helper object for debug GUI
-    DearImGui m_imGui;
-
-    // Camera controller
-    CameraController m_cameraController;
-
-    // Global scene
-    Scene m_scene;
-
-    // Renderer
-    Renderer m_renderer;
-
-    // Skybox texture
-    std::shared_ptr<TextureCubemapObject> m_skyboxTexture;
-
-    // Default material
-    std::shared_ptr<Material> m_defaultMaterial;
+    // Grass parameters
+    Mesh m_grassBlade;
+    std::shared_ptr<Material> m_grassMaterial;
+    glm::vec4 m_baseGrassColor;
+    glm::vec4 m_tipGrassColor;
+    float m_bladeHeight;
 };

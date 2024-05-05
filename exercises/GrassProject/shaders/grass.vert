@@ -7,26 +7,26 @@ layout (location = 1) in vec3 VertexNormal;
 // Output
 out vec3 WorldPosition;
 out vec3 WorldNormal;
+out float Height;
 
 // Uniforms
 uniform mat4 WorldMatrix;
 uniform mat4 ViewProjMatrix;
-uniform mat4 grassBlade;
 
-uniform vec3 offsets[100];
-
-uniform float time; // Time parameter for animation
+uniform float bladeHeight; // height of a grass blade.
+// uniform vec3 offsets[100]; // offset vectors for each instance of grass blade.
+// uniform float time; // Time parameter for animation
 
 
 void main()
 {
-    vec3 offset = offsets[gl_InstanceID];
+    // Get offset for this instance
+    // vec3 offset = offsets[gl_InstanceID];
+    vec3 offset = vec3(0.0f);
 
-	// Transform vertex position and normal to world space
-    vec4 worldPos = (VertexPosition + offset, 1.0);
-    
-    vec3 worldNormal = mat3(transpose(inverse(grassBlade))) * VertexNormal;
+    WorldPosition = (WorldMatrix * vec4(VertexPosition + offset, 1.0)).xyz;
+	WorldNormal = (WorldMatrix * vec4(VertexNormal, 0.0)).xyz;
 
     // Pass transformed vertex position and normal to the geometry shader
-    gl_Position = worldPos;
+    gl_Position = ViewProjMatrix * vec4(WorldPosition, 1.0);
 }
