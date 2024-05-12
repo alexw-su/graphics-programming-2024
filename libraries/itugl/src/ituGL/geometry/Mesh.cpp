@@ -59,6 +59,16 @@ void Mesh::DrawSubmesh(int submeshIndex) const
     //VertexArrayObject::Unbind(); // No need to unbind
 }
 
+// Bind the VAO and render the drawcall of the submesh
+void Mesh::DrawSubmeshInstanced(int submeshIndex, int count) const
+{
+    const Submesh& submesh = GetSubmesh(submeshIndex);
+    const VertexArrayObject& vao = GetVertexArray(submesh.vaoIndex);
+    vao.Bind();
+    submesh.drawcall.DrawInstanced(count);
+    //VertexArrayObject::Unbind(); // No need to unbind
+}
+
 void Mesh::SetupVertexAttribute(VertexArrayObject& vao, const VertexAttribute::Layout& attributeLayout, GLuint& location, const SemanticMap& locations)
 {
     const VertexAttribute& attribute = attributeLayout.GetAttribute();

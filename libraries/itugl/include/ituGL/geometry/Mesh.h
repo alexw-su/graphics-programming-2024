@@ -121,6 +121,7 @@ public:
 
     // Draws a submesh
     void DrawSubmesh(int submeshIndex) const;
+    void DrawSubmeshInstanced(int submeshIndex, int count) const;
 
 private:
 
@@ -131,16 +132,15 @@ private:
         Drawcall drawcall;
     };
 
-private:
-
+public:
+    inline Submesh& GetSubmesh(unsigned int submeshIndex) { return m_submeshes[submeshIndex]; }
     inline VertexBufferObject& GetVertexBuffer(unsigned int vboIndex) { return m_vbos[vboIndex]; }
-
-    inline ElementBufferObject& GetElementBuffer(unsigned int eboIndex) { return m_ebos[eboIndex]; }
-
     inline VertexArrayObject& GetVertexArray(unsigned int vaoIndex) { return m_vaos[vaoIndex]; }
 
+private:
+    inline ElementBufferObject& GetElementBuffer(unsigned int eboIndex) { return m_ebos[eboIndex]; }
+
     inline const Submesh& GetSubmesh(unsigned int submeshIndex) const { return m_submeshes[submeshIndex]; }
-    inline Submesh& GetSubmesh(unsigned int submeshIndex) { return m_submeshes[submeshIndex]; }
 
     // Set a vertex attribute in a VAO, using the specified layout, and increases the location index according to the size of the attribute
     void SetupVertexAttribute(VertexArrayObject& vao, const VertexAttribute::Layout& attributeLayout, GLuint& location, const SemanticMap& locations);

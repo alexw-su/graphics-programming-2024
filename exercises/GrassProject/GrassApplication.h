@@ -10,6 +10,8 @@
 #include <array>
 #include <ituGL/asset/ShaderLoader.h>
 
+#include <ituGL/utils/DearImGui.h>
+
 class Texture2DObject;
 
 class GrassApplication : public Application
@@ -21,6 +23,7 @@ protected:
     void Initialize() override;
     void Update() override;
     void Render() override;
+    void Cleanup() override;
 
     // Grass Implementation
     void InitializeGrass();
@@ -33,6 +36,8 @@ private:
 
     void DrawObject(const Mesh& mesh, Material& material, const glm::mat4& worldMatrix);
 
+    void DrawObjectInstanced(const Mesh& mesh, Material& material, const glm::mat4& worldMatrix);
+
     std::shared_ptr<Texture2DObject> CreateDefaultTexture();
     std::shared_ptr<Texture2DObject> CreateHeightMap(unsigned int width, unsigned int height, glm::ivec2 coords);
     std::shared_ptr<Texture2DObject> LoadTexture(const char* path);
@@ -40,21 +45,30 @@ private:
     void CreateTerrainMesh(Mesh& mesh, unsigned int gridX, unsigned int gridY);
 
     // Method for making the grass blade
-    void CreateGrassMesh(Mesh& mesh, float height);
+    void CreateGrassMesh(Mesh& mesh, int amount);
+    void SetupInstanceMatrix(Mesh& mesh, int amount);
     std::shared_ptr<Texture2DObject> CreateNoisePattern();
 
-    float deltaTime;
-    float lastFrame;
+    void RenderGUI();
+
     float time;
 
 private:
     unsigned int m_gridX, m_gridY;
 
-    Camera m_camera;
-
     ShaderLoader m_vertexShaderLoader;
     ShaderLoader m_fragmentShaderLoader;
 
+    // Helper object for debug GUI
+    DearImGui m_imGui;
+
+    // Mouse position for camera controller
+    glm::vec2 m_mousePosition;
+
+    // Camera controller parameters
+    Camera m_camera;
+
+    // Terrain
     Mesh m_terrainPatch;
 
     std::shared_ptr<Material> m_defaultMaterial;
@@ -84,4 +98,6 @@ private:
     float m_windStrength;
     float m_bladeHeight;
     std::shared_ptr<Texture2DObject> m_noisePattern;
+    glm::vec3 m_translations[100];
+    glm::mat4 m_matrices[100];
 };
