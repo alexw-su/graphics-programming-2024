@@ -20,6 +20,20 @@ unsigned int Mesh::AddVertexArray()
     return vaoIndex;
 }
 
+unsigned int Mesh::AddVertexDataForComputeShader(size_t size)
+{
+    unsigned int vboIndex = GetVertexBufferCount();
+    VertexBufferObject& vbo = m_vbos.emplace_back();
+    vbo.Bind();
+    vbo.AllocateData(size);
+    return vboIndex;
+}
+
+unsigned int Mesh::AddElementDataForComputeShader(size_t size)
+{
+    return 0;
+}
+
 unsigned int Mesh::AddSubmesh(unsigned int vaoIndex, const Drawcall& drawcall)
 {
     unsigned int submeshIndex = GetSubmeshCount();

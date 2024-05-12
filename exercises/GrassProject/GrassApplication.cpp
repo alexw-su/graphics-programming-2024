@@ -21,7 +21,6 @@
 #include <ituGL/shader/Material.h>
 #include <glm/gtx/euler_angles.hpp>
 #include <glm/gtx/transform.hpp>
-#include <imgui.h>
 
 #include <ituGL/lighting/DirectionalLight.h>
 #include <ituGL/lighting/PointLight.h>
@@ -40,8 +39,6 @@
 #include <ituGL/renderer/ForwardRenderPass.h>
 #include <ituGL/scene/RendererSceneVisitor.h>
 
-#include <ituGL/scene/ImGuiSceneVisitor.h>
-#include <imgui.h>
 
 GrassApplication::GrassApplication()
     : Application(1024, 1024, "Stylized Grass")
@@ -50,7 +47,10 @@ GrassApplication::GrassApplication()
     , m_fragmentShaderLoader(Shader::Type::FragmentShader)
     , m_baseGrassColor(glm::vec4(0.0f, 0.4f, 0.0f, 1.0f))
     , m_tipGrassColor(glm::vec4(0.5f, 1.0f, 0.0f, 1.0f))
-    , m_bladeHeight(1.0f)
+    , m_bladeHeight(5.0f)
+    , m_windDirection(glm::vec2(0.5f, 0.5f))
+    , m_windStrength(1.0f)
+    , time(0)
 {
 }
 
@@ -67,6 +67,10 @@ void GrassApplication::Update()
     window.GetDimensions(width, height);
     float aspectRatio = static_cast<float>(width) / height;
     m_camera.SetPerspectiveProjectionMatrix(1.0f, aspectRatio, 0.1f, 100.0f);
+
+    // Update Grass based on time elapsed
+    time += Application::GetDeltaTime();
+    UpdateGrass();
 }
 
 void GrassApplication::Render()
@@ -77,10 +81,10 @@ void GrassApplication::Render()
     GetDevice().Clear(true, Color(0.0f, 0.0f, 0.0f, 1.0f), true, 1.0f);
 
     // Terrain patches
-    DrawObject(m_terrainPatch, *m_terrainMaterial00, glm::scale(glm::vec3(10.0f)));
-    DrawObject(m_terrainPatch, *m_terrainMaterial10, glm::translate(glm::vec3(-10.0f, 0.0f, 0.0f)) * glm::scale(glm::vec3(10.0f)));
-    DrawObject(m_terrainPatch, *m_terrainMaterial01, glm::translate(glm::vec3(0.0f, 0.0f, -10.0f)) * glm::scale(glm::vec3(10.0f)));
-    DrawObject(m_terrainPatch, *m_terrainMaterial11, glm::translate(glm::vec3(-10.0f, 0.0f, -10.0f)) * glm::scale(glm::vec3(10.0f)));
+    DrawObject(m_terrainPatch, *m_terrainMaterial00, glm::translate(glm::vec3(0.0f,   -5.0f, 0.0f)) * glm::scale(glm::vec3(10.0f)));
+    DrawObject(m_terrainPatch, *m_terrainMaterial10, glm::translate(glm::vec3(-10.0f, -5.0f, 0.0f)) * glm::scale(glm::vec3(10.0f)));
+    DrawObject(m_terrainPatch, *m_terrainMaterial01, glm::translate(glm::vec3(0.0f,   -5.0f, -10.0f)) * glm::scale(glm::vec3(10.0f)));
+    DrawObject(m_terrainPatch, *m_terrainMaterial11, glm::translate(glm::vec3(-10.0f, -5.0f, -10.0f)) * glm::scale(glm::vec3(10.0f)));
 
     // Water patches
     DrawObject(m_terrainPatch, *m_waterMaterial, glm::translate(glm::vec3(0.0f, -1.5f, 0.0f)) * glm::scale(glm::vec3(10.0f)));
@@ -89,7 +93,7 @@ void GrassApplication::Render()
     DrawObject(m_terrainPatch, *m_waterMaterial, glm::translate(glm::vec3(-10.0f, -1.5f, -10.0f)) * glm::scale(glm::vec3(10.0f)));
 
     // Add Grass Field
-    DrawObject(m_grassBlade, *m_grassMaterial, glm::scale(glm::vec3(10.0f)));
+    DrawObject(m_grassBlade, *m_grassMaterial, glm::scale(glm::vec3(5.0f)));
 }
 
 
@@ -98,6 +102,7 @@ void GrassApplication::Initialize(){
     m_baseGrassColor = glm::vec4(0.0f, 0.4f, 0.0f, 1.0f);
     m_tipGrassColor  = glm::vec4(0.5f, 1.0f, 0.0f, 1.0f);
     m_bladeHeight = 1.0f;
+    m_windDirection = glm::vec2(0.0f, 1.0f);
 
     // Initialize the application window
     Application::Initialize();
@@ -142,7 +147,7 @@ void GrassApplication::InitializeTextures()
 void GrassApplication::InitializeGrass()
 {
     // Setup offset for each instance of blade
-    glm::vec3 translations[100];
+    std::vector<glm::vec3> translations;
     int index = 0;
     float offset = 0.1f;
     for (int z = -10; z < 10; z += 2)
@@ -150,12 +155,15 @@ void GrassApplication::InitializeGrass()
         for (int x = -10; x < 10; x += 2)
         {
             glm::vec3 translation;
-            translation.x = (float)x / 10.0f + offset;
+            translation.x = (float) x / 10.0f + offset;
             translation.y = 0;
-            translation.z = (float)z / 10.0f + offset;
-            translations[index++] = translation;
+            translation.z = (float) z / 10.0f + offset;
+            translations.emplace_back(translation);
         }
     }
+
+    // Setup perlin noise pattern for moving the grass
+    m_noisePattern = CreateNoisePattern();
 
     // Setup shader program for grass
     Shader grassVS = m_vertexShaderLoader.Load("shaders/grass.vert");
@@ -170,7 +178,14 @@ void GrassApplication::InitializeGrass()
     m_grassMaterial->SetUniformValue("baseColor", m_baseGrassColor);
     m_grassMaterial->SetUniformValue("tipColor", m_tipGrassColor);
     m_grassMaterial->SetUniformValue("bladeHeight", m_bladeHeight);
-    // m_grassMaterial->GetUniformValue("offset", translations);
+    m_grassMaterial->SetUniformValue("noise", m_noisePattern);
+    m_grassMaterial->SetUniformValue("time", time);
+    m_grassMaterial->SetUniformValue("direction", glm::vec2(0.5f, 0.5f));
+    m_grassMaterial->SetUniformValue("strength", 1.0f);
+
+    m_grassMaterial->SetUniformValue("WindFrequency", glm::vec4(0.025, 0.025, 0, 0));
+    m_grassMaterial->SetUniformValue("WindDistortionMapScaleOffset", glm::vec4(0.01f, 0.01f, 0.0f, 0.0f));
+    //m_grassMaterial->SetUniformValue("offset", translations);
 }
 
 void GrassApplication::InitializeMaterials()
@@ -221,12 +236,18 @@ void GrassApplication::InitializeMaterials()
 
     // Water material
     m_waterMaterial = std::make_shared<Material>(waterShaderProgram);
-    m_waterMaterial->SetUniformValue("Color", glm::vec4(1.0f, 1.0f, 1.0f, 0.5f));
-    m_waterMaterial->SetUniformValue("ColorTexture", m_waterTexture);
+    m_waterMaterial->SetUniformValue("Color", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
+    m_waterMaterial->SetUniformValue("ColorTexture", m_grassTexture);
     m_waterMaterial->SetUniformValue("ColorTextureScale", glm::vec2(0.0625f));
     m_waterMaterial->SetBlendEquation(Material::BlendEquation::Add);
     m_waterMaterial->SetBlendParams(Material::BlendParam::SourceAlpha, Material::BlendParam::OneMinusSourceAlpha);
 }
+
+void GrassApplication::UpdateGrass()
+{
+    m_grassMaterial->SetUniformValue("time", time);
+}
+
 
 void GrassApplication::InitializeMeshes()
 {
@@ -302,6 +323,30 @@ std::shared_ptr<Texture2DObject> GrassApplication::CreateHeightMap(unsigned int 
     heightmap->GenerateMipmap();
 
     return heightmap;
+}
+
+std::shared_ptr<Texture2DObject> GrassApplication::CreateNoisePattern()
+{
+    std::shared_ptr<Texture2DObject> noise = std::make_shared<Texture2DObject>();
+    float width = 50;
+    float height = 50;
+    
+    std::vector<float> pixels(height * width);
+    for (unsigned int j = 0; j < height; ++j)
+    {
+        for (unsigned int i = 0; i < width; ++i)
+        {
+            float x = static_cast<float>(i) / (width - 1);
+            float y = static_cast<float>(j) / (height - 1);
+            pixels[j * width + i] = stb_perlin_fbm_noise3(x, y, 0.0f, 1.9f, 0.5f, 8) * 0.5f;
+        }
+    }
+
+    noise->Bind();
+    noise->SetImage<float>(0, width, height, TextureObject::FormatR, TextureObject::InternalFormatR16F, pixels);
+    noise->GenerateMipmap();
+
+    return noise;
 }
 
 void GrassApplication::DrawObject(const Mesh& mesh, Material& material, const glm::mat4& worldMatrix)
@@ -415,35 +460,17 @@ void GrassApplication::CreateGrassMesh(Mesh& mesh, float height)
     glm::vec3 position1(-0.03f, 0.0f, 0.0f);
     glm::vec3 normal1(-1.0f, 0.0f, 0.0f);
 
-    glm::vec3 position2(0.03f, 0.5f, 0.0f);
-    glm::vec3 normal2(1.0f, 0.0f, 0.0f);
-
-    glm::vec3 position3(-0.03f, 0.5f, 0.0f);
-    glm::vec3 normal3(-1.0f, 0.0f, 0.0f);
-
-    glm::vec3 position4(0.0f, 1.0f, 0.0f);
-    glm::vec3 normal4(0.0f, 1.0f, 0.0f);
+    glm::vec3 position2(0.0f, 1.0f, 0.0f);
+    glm::vec3 normal2(0.0f, 1.0f, 0.0f);
 
     vertices.emplace_back(position, normal);
     vertices.emplace_back(position1, normal1);
     vertices.emplace_back(position2, normal2);
-    vertices.emplace_back(position3, normal3);
-    vertices.emplace_back(position4, normal4);
 
-    //Triangle 1
+    //Triangle
     indices.push_back(0);
     indices.push_back(1);
     indices.push_back(2);
-
-    //Triangle 2
-    indices.push_back(1);
-    indices.push_back(2);
-    indices.push_back(3);
-
-    //Triangle3
-    indices.push_back(2);
-    indices.push_back(3);
-    indices.push_back(4);
   
     mesh.AddSubmesh<Vertex, unsigned int, VertexFormat::LayoutIterator>(Drawcall::Primitive::Triangles, vertices, indices,
         vertexFormat.LayoutBegin(static_cast<int>(vertices.size()), true /* interleaved */), vertexFormat.LayoutEnd());

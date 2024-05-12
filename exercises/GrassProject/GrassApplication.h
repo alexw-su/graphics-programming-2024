@@ -2,12 +2,13 @@
 
 #include <ituGL/application/Application.h>
 
-#include <ituGL/asset/ShaderLoader.h>
-#include <ituGL/geometry/Mesh.h>
+#include <ituGL/scene/Scene.h>
+#include <ituGL/texture/FramebufferObject.h>
+#include <ituGL/renderer/Renderer.h>
 #include <ituGL/camera/Camera.h>
-#include <ituGL/shader/Material.h>
-#include <glm/mat4x4.hpp>
-#include <vector>
+#include <ituGL/camera/CameraController.h>
+#include <array>
+#include <ituGL/asset/ShaderLoader.h>
 
 class Texture2DObject;
 
@@ -24,10 +25,10 @@ protected:
     // Grass Implementation
     void InitializeGrass();
 
-
 private:
     void InitializeTextures();
     void InitializeMaterials();
+    void UpdateGrass();
     void InitializeMeshes();
 
     void DrawObject(const Mesh& mesh, Material& material, const glm::mat4& worldMatrix);
@@ -40,6 +41,11 @@ private:
 
     // Method for making the grass blade
     void CreateGrassMesh(Mesh& mesh, float height);
+    std::shared_ptr<Texture2DObject> CreateNoisePattern();
+
+    float deltaTime;
+    float lastFrame;
+    float time;
 
 private:
     unsigned int m_gridX, m_gridY;
@@ -74,5 +80,8 @@ private:
     std::shared_ptr<Material> m_grassMaterial;
     glm::vec4 m_baseGrassColor;
     glm::vec4 m_tipGrassColor;
+    glm::vec2 m_windDirection;
+    float m_windStrength;
     float m_bladeHeight;
+    std::shared_ptr<Texture2DObject> m_noisePattern;
 };

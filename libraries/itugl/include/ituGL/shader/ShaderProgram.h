@@ -28,7 +28,7 @@ public:
     // (C++) 2
     // Declare the type used for uniform locations
     using Location = GLint;
-
+    
 public:
     ShaderProgram();
     virtual ~ShaderProgram();

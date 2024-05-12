@@ -14,20 +14,7 @@ uniform vec4 tipColor;
 
 void main()
 {
-    float heightFactor = (WorldPosition.y + 1.0) / 2.0; // Normalize the height to [0, 1]
-    vec4 grassColor;
-    
-    if (heightFactor <= 0.5) {
-        // Interpolate between color1 and color2 for the base and middle part of the grass blade
-        // grassColor = mix(base_green, middle_green, heightFactor * 2.0);
-        grassColor = baseColor;
-    } 
-    else 
-    {
-        // Interpolate between color2 and color3 for the tip of the grass blade
-        // grassColor = mix(middle_green, tip_green, (heightFactor - 0.5) * 2.0);
-        grassColor = tipColor;
-    }
+    vec4 grassColor = mix(baseColor, tipColor, Height);
     
     // Output the final color
     FragColor = grassColor;

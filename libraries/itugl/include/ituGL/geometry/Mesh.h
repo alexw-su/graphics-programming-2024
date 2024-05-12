@@ -23,6 +23,9 @@ public:
     // Adds a new VBO with uninitialized data
     unsigned int AddVertexData(size_t size);
 
+    // Adds a new VBO with uninitialized data
+    unsigned int AddVertexDataForComputeShader(size_t size);
+
     // Adds a new VBO and initializes it with data
     template<typename T>
     unsigned int AddVertexData(std::span<const T> vertices);
@@ -30,6 +33,9 @@ public:
     // Adds a new VBO and initializes it with data
     template<typename T>
     unsigned int AddElementData(std::span<const T> elements);
+
+    // Adds a new VBO and initializes it with data
+    unsigned int AddElementDataForComputeShader(size_t size);
 
     // Adds a new VAO. It is your responsability to set the attribute pointers and the EBO, if needed
     unsigned int AddVertexArray();
