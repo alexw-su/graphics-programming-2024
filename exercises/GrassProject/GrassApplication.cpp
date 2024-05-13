@@ -1,6 +1,6 @@
 #include "GrassApplication.h"
 
-// Mesh, Texture and terrain
+// For Mesh & Texture
 #include <ituGL/geometry/VertexFormat.h>
 #include <ituGL/texture/Texture2DObject.h>
 
@@ -16,30 +16,7 @@
 #include <iostream>
 #include <numbers>  // for PI constant
 
-// Lights
-#include <ituGL/asset/Texture2DLoader.h>
-#include <ituGL/shader/Material.h>
-#include <glm/gtx/euler_angles.hpp>
-#include <glm/gtx/transform.hpp>
-
-#include <ituGL/lighting/DirectionalLight.h>
-#include <ituGL/lighting/PointLight.h>
-
-// Skybox and Scene
-#include <ituGL/asset/TextureCubemapLoader.h>
-#include <ituGL/camera/Camera.h>
-#include <ituGL/scene/SceneCamera.h>
-#include <ituGL/scene/SceneLight.h>
-
-#include <ituGL/shader/ShaderUniformCollection.h>
-#include <ituGL/geometry/Model.h>
-#include <ituGL/scene/SceneModel.h>
-
-#include <ituGL/renderer/SkyboxRenderPass.h>
-#include <ituGL/renderer/ForwardRenderPass.h>
-#include <ituGL/scene/RendererSceneVisitor.h>
-
-// GÙI
+// For ImGUI
 #include <imgui.h>
 
 GrassApplication::GrassApplication()
@@ -52,7 +29,10 @@ GrassApplication::GrassApplication()
     , m_bladeHeight(1.0f)
     , m_windDirection(glm::vec2(0.5f, 0.5f))
     , m_windStrength(1.0f)
+    , m_amount(100)
     , time(0)
+    // Camera
+    , m_cameraPos(glm::vec3(0.0f, 5.0f, 15.0f))
 {
 }
 
@@ -63,7 +43,7 @@ void GrassApplication::Update()
     const Window& window = GetMainWindow();
 
     glm::vec2 mousePosition = window.GetMousePosition(true);
-    m_camera.SetViewMatrix(glm::vec3(0.0f, 5.0f, 15.0f), glm::vec3(mousePosition, 0.0f));
+    m_camera.SetViewMatrix(m_cameraPos, glm::vec3(mousePosition, 0.0f));
 
     int width, height;
     window.GetDimensions(width, height);
@@ -83,19 +63,13 @@ void GrassApplication::Render()
     GetDevice().Clear(true, Color(0.0f, 0.0f, 0.0f, 1.0f), true, 1.0f);
 
     // Terrain patches
-    //DrawObject(m_terrainPatch, *m_terrainMaterial00, glm::translate(glm::vec3(0.0f,   -5.0f, 0.0f)) * glm::scale(glm::vec3(10.0f)));
-    //DrawObject(m_terrainPatch, *m_terrainMaterial10, glm::translate(glm::vec3(-10.0f, -5.0f, 0.0f)) * glm::scale(glm::vec3(10.0f)));
-    //DrawObject(m_terrainPatch, *m_terrainMaterial01, glm::translate(glm::vec3(0.0f,   -5.0f, -10.0f)) * glm::scale(glm::vec3(10.0f)));
-    //DrawObject(m_terrainPatch, *m_terrainMaterial11, glm::translate(glm::vec3(-10.0f, -5.0f, -10.0f)) * glm::scale(glm::vec3(10.0f)));
+    DrawObject(m_terrainPatch, *m_terrainMaterial, glm::translate(glm::vec3(0.0f, -1.5f, 0.0f)) * glm::scale(glm::vec3(10.0f)));
+    DrawObject(m_terrainPatch, *m_terrainMaterial, glm::translate(glm::vec3(-10.0f, -1.5f, 0.0f)) * glm::scale(glm::vec3(10.0f)));
+    DrawObject(m_terrainPatch, *m_terrainMaterial, glm::translate(glm::vec3(0.0f, -1.5f, -10.0f)) * glm::scale(glm::vec3(10.0f)));
+    DrawObject(m_terrainPatch, *m_terrainMaterial, glm::translate(glm::vec3(-10.0f, -1.5f, -10.0f)) * glm::scale(glm::vec3(10.0f)));
 
-    // Water patches
-    DrawObject(m_terrainPatch, *m_waterMaterial, glm::translate(glm::vec3(0.0f, -1.5f, 0.0f)) * glm::scale(glm::vec3(10.0f)));
-    DrawObject(m_terrainPatch, *m_waterMaterial, glm::translate(glm::vec3(-10.0f, -1.5f, 0.0f)) * glm::scale(glm::vec3(10.0f)));
-    DrawObject(m_terrainPatch, *m_waterMaterial, glm::translate(glm::vec3(0.0f, -1.5f, -10.0f)) * glm::scale(glm::vec3(10.0f)));
-    DrawObject(m_terrainPatch, *m_waterMaterial, glm::translate(glm::vec3(-10.0f, -1.5f, -10.0f)) * glm::scale(glm::vec3(10.0f)));
-
-    // Add Grass Field
-    DrawObjectInstanced(m_grassBlade, *m_grassMaterial, glm::translate(glm::vec3(0.0f, 0.0f, 0.0f)));
+    // Grass Instancing
+    DrawObjectInstanced(m_grassBlade, *m_grassMaterial, glm::translate(glm::vec3(0.0f, -1.5f, 0.0f)), m_amount);
 
     // GUI
     RenderGUI();
@@ -114,7 +88,10 @@ void GrassApplication::RenderGUI()
     m_imGui.BeginFrame();
 
     // Add debug controls for light properties
+    ImGui::DragFloat3("Camera Position", &m_cameraPos[0], 0.01f);
+    ImGui::Separator();
     ImGui::DragFloat("Grass Height", &m_bladeHeight, 0.01f, 0.0f, 2.0f);
+    ImGui::DragInt("Grass Density", &m_amount, 2, 0, 100000);
     ImGui::Separator();
     ImGui::ColorEdit3("Base Color", &m_baseGrassColor[0]);
     ImGui::ColorEdit3("Tip Color", &m_tipGrassColor[0]);
@@ -146,41 +123,15 @@ void GrassApplication::Initialize()
 
 void GrassApplication::InitializeTextures()
 {
-    m_defaultTexture = CreateDefaultTexture();
 
     // Load terrain textures
     m_dirtTexture = LoadTexture("textures/dirt.png");
     m_grassTexture = LoadTexture("textures/grass.jpg");
-    m_rockTexture = LoadTexture("textures/rock.jpg");
-    m_snowTexture = LoadTexture("textures/snow.jpg");
-
-    m_heightmapTexture00 = CreateHeightMap(m_gridX, m_gridY, glm::ivec2(0, 0));
-    m_heightmapTexture10 = CreateHeightMap(m_gridX, m_gridY, glm::ivec2(-1, 0));
-    m_heightmapTexture01 = CreateHeightMap(m_gridX, m_gridY, glm::ivec2(0, -1));
-    m_heightmapTexture11 = CreateHeightMap(m_gridX, m_gridY, glm::ivec2(-1, -1));
-
-    // Load water texture here
-    m_waterTexture = LoadTexture("textures/water.png");
 }
 
 void GrassApplication::InitializeGrass()
 {
-    // Setup offset for each instance of blade
-    int index = 0;
-    float offset = 0.1f;
-    for (int z = -10; z < 10; z += 2)
-    {
-        for (int x = -10; x < 10; x += 2)
-        {
-            glm::vec3 translation;
-            translation.x = (float) x / 10.0f + offset + (rand() % 100) * 0.01f;
-            translation.y = 0;
-            translation.z = (float) z / 10.0f + offset + (rand() % 100) * 0.01f;
-            m_translations[index++] = translation;
-        }
-    }
-
-    // Setup perlin noise pattern for moving the grass
+    // Setup perlin noise pattern for applying wind
     m_noisePattern = CreateNoisePattern();
 
     // Setup shader program for grass
@@ -200,62 +151,24 @@ void GrassApplication::InitializeGrass()
     m_grassMaterial->SetUniformValue("time", time);
     m_grassMaterial->SetUniformValue("direction", m_windDirection);
     m_grassMaterial->SetUniformValue("strength", m_windStrength);
-
 }
 
 void GrassApplication::InitializeMaterials()
 {
-    // Default shader program
-    Shader defaultVS = m_vertexShaderLoader.Load("shaders/default.vert");
-    Shader defaultFS = m_fragmentShaderLoader.Load("shaders/default.frag");
-    std::shared_ptr<ShaderProgram> defaultShaderProgram = std::make_shared<ShaderProgram>();
-    defaultShaderProgram->Build(defaultVS, defaultFS);
 
-    // Default material
-    m_defaultMaterial = std::make_shared<Material>(defaultShaderProgram);
-    m_defaultMaterial->SetUniformValue("Color", glm::vec4(1.0f));
-
-    // Terrain shader program
+    // Terrain shader
     Shader terrainVS = m_vertexShaderLoader.Load("shaders/terrain.vert");
     Shader terrainFS = m_fragmentShaderLoader.Load("shaders/terrain.frag");
     std::shared_ptr<ShaderProgram> terrainShaderProgram = std::make_shared<ShaderProgram>();
     terrainShaderProgram->Build(terrainVS, terrainFS);
 
-    // Terrain materials
-    m_terrainMaterial00 = std::make_shared<Material>(terrainShaderProgram);
-    m_terrainMaterial00->SetUniformValue("Color", glm::vec4(1.0f));
-    m_terrainMaterial00->SetUniformValue("Heightmap", m_heightmapTexture00);
-    m_terrainMaterial00->SetUniformValue("ColorTexture0", m_dirtTexture);
-    m_terrainMaterial00->SetUniformValue("ColorTexture1", m_grassTexture);
-    m_terrainMaterial00->SetUniformValue("ColorTexture2", m_rockTexture);
-    m_terrainMaterial00->SetUniformValue("ColorTexture3", m_snowTexture);
-    m_terrainMaterial00->SetUniformValue("ColorTextureRange01", glm::vec2(-0.2f, 0.0f));
-    m_terrainMaterial00->SetUniformValue("ColorTextureRange12", glm::vec2(0.1f, 0.2f));
-    m_terrainMaterial00->SetUniformValue("ColorTextureRange23", glm::vec2(0.25f, 0.3f));
-    m_terrainMaterial00->SetUniformValue("ColorTextureScale", glm::vec2(0.125f));
-
-    m_terrainMaterial10 = std::make_shared<Material>(*m_terrainMaterial00);
-    m_terrainMaterial10->SetUniformValue("Heightmap", m_heightmapTexture10);
-
-    m_terrainMaterial01 = std::make_shared<Material>(*m_terrainMaterial00);
-    m_terrainMaterial01->SetUniformValue("Heightmap", m_heightmapTexture01);
-
-    m_terrainMaterial11 = std::make_shared<Material>(*m_terrainMaterial00);
-    m_terrainMaterial11->SetUniformValue("Heightmap", m_heightmapTexture11);
-
-    // Water shader
-    Shader waterVS = m_vertexShaderLoader.Load("shaders/water.vert");
-    Shader waterFS = m_fragmentShaderLoader.Load("shaders/water.frag");
-    std::shared_ptr<ShaderProgram> waterShaderProgram = std::make_shared<ShaderProgram>();
-    waterShaderProgram->Build(waterVS, waterFS);
-
-    // Water material
-    m_waterMaterial = std::make_shared<Material>(waterShaderProgram);
-    m_waterMaterial->SetUniformValue("Color", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
-    m_waterMaterial->SetUniformValue("ColorTexture", m_dirtTexture);
-    m_waterMaterial->SetUniformValue("ColorTextureScale", glm::vec2(0.0625f));
-    m_waterMaterial->SetBlendEquation(Material::BlendEquation::Add);
-    m_waterMaterial->SetBlendParams(Material::BlendParam::SourceAlpha, Material::BlendParam::OneMinusSourceAlpha);
+    // Terrain material
+    m_terrainMaterial = std::make_shared<Material>(terrainShaderProgram);
+    m_terrainMaterial->SetUniformValue("Color", glm::vec4(1.0f, 1.0f, 1.0f, 1.0f));
+    m_terrainMaterial->SetUniformValue("ColorTexture", m_dirtTexture);
+    m_terrainMaterial->SetUniformValue("ColorTextureScale", glm::vec2(0.0625f));
+    m_terrainMaterial->SetBlendEquation(Material::BlendEquation::Add);
+    m_terrainMaterial->SetBlendParams(Material::BlendParam::SourceAlpha, Material::BlendParam::OneMinusSourceAlpha);
 }
 
 void GrassApplication::UpdateGrass()
@@ -277,31 +190,6 @@ void GrassApplication::InitializeMeshes()
 }
 
 // Helper Methods
-std::shared_ptr<Texture2DObject> GrassApplication::CreateDefaultTexture()
-{
-    std::shared_ptr<Texture2DObject> texture = std::make_shared<Texture2DObject>();
-
-    int width = 4;
-    int height = 4;
-    std::vector<float> pixels;
-    for (int j = 0; j < height; ++j)
-    {
-        for (int i = 0; i < width; ++i)
-        {
-            pixels.push_back(1.0f);
-            pixels.push_back(0.0f);
-            pixels.push_back(1.0f);
-            pixels.push_back(1.0f);
-        }
-    }
-
-    texture->Bind();
-    texture->SetImage<float>(0, width, height, TextureObject::FormatRGBA, TextureObject::InternalFormatRGBA, pixels);
-    texture->GenerateMipmap();
-
-    return texture;
-}
-
 std::shared_ptr<Texture2DObject> GrassApplication::LoadTexture(const char* path)
 {
     std::shared_ptr<Texture2DObject> texture = std::make_shared<Texture2DObject>();
@@ -323,28 +211,6 @@ std::shared_ptr<Texture2DObject> GrassApplication::LoadTexture(const char* path)
     stbi_image_free(data);
 
     return texture;
-}
-
-std::shared_ptr<Texture2DObject> GrassApplication::CreateHeightMap(unsigned int width, unsigned int height, glm::ivec2 coords)
-{
-    std::shared_ptr<Texture2DObject> heightmap = std::make_shared<Texture2DObject>();
-
-    std::vector<float> pixels(height * width);
-    for (unsigned int j = 0; j < height; ++j)
-    {
-        for (unsigned int i = 0; i < width; ++i)
-        {
-            float x = static_cast<float>(i) / (width - 1) + coords.x;
-            float y = static_cast<float>(j) / (height - 1) + coords.y;
-            pixels[j * width + i] = stb_perlin_fbm_noise3(x, y, 0.0f, 1.9f, 0.5f, 8) * 0.5f;
-        }
-    }
-
-    heightmap->Bind();
-    heightmap->SetImage<float>(0, width, height, TextureObject::FormatR, TextureObject::InternalFormatR16F, pixels);
-    heightmap->GenerateMipmap();
-
-    return heightmap;
 }
 
 std::shared_ptr<Texture2DObject> GrassApplication::CreateNoisePattern()
@@ -384,7 +250,7 @@ void GrassApplication::DrawObject(const Mesh& mesh, Material& material, const gl
     mesh.DrawSubmesh(0);
 }
 
-void GrassApplication::DrawObjectInstanced(const Mesh& mesh, Material& material, const glm::mat4& worldMatrix)
+void GrassApplication::DrawObjectInstanced(const Mesh& mesh, Material& material, const glm::mat4& worldMatrix, int instanceCount)
 {
     material.Use();
 
@@ -394,7 +260,7 @@ void GrassApplication::DrawObjectInstanced(const Mesh& mesh, Material& material,
     ShaderProgram::Location locationViewProjMatrix = shaderProgram.GetUniformLocation("ViewProjMatrix");
     material.GetShaderProgram()->SetUniform(locationViewProjMatrix, m_camera.GetViewProjectionMatrix());
 
-    mesh.DrawSubmeshInstanced(0, 100);
+    mesh.DrawSubmeshInstanced(0, instanceCount);
 }
 
 void GrassApplication::CreateTerrainMesh(Mesh& mesh, unsigned int gridX, unsigned int gridY)
@@ -510,7 +376,7 @@ void GrassApplication::CreateGrassMesh(Mesh& mesh, int amount)
     mesh.AddSubmesh<Vertex, unsigned int, VertexFormat::LayoutIterator>(Drawcall::Primitive::Triangles, vertices, indices,
         vertexFormat.LayoutBegin(static_cast<int>(vertices.size()), true /* interleaved */), vertexFormat.LayoutEnd());
 
-    SetupInstanceMatrix(mesh, 100);
+    SetupInstanceMatrix(mesh, 100000);
 }
 
 void GrassApplication::SetupInstanceMatrix(Mesh& mesh, int amount)
@@ -522,19 +388,20 @@ void GrassApplication::SetupInstanceMatrix(Mesh& mesh, int amount)
     // Fill in matrices here ....
 
     srand(glfwGetTime());
-    float posOffset = 2.5f;
-    for(unsigned int i = 0; i < amount; i++)
+    for(unsigned int matrix_id = 0; matrix_id < amount; matrix_id++)
     { 
-        glm::mat4 model = glm::mat4(1.0f);
+        float pos_x = (float) (rand() % 200 - 100) * 0.1f ;
+        float pos_z = (float) (rand() % 200 - 100) * 0.1f ;
+        float scale = (float) (rand() % 10) * 0.1f + 0.5f;
 
-        float itr = (float)i / (float)amount;
+        glm::mat4 mat{
+            1.0f , 0.0f , 0.0f , 0.0f,
+            0.0f , scale, 0.0f , 0.0f,
+            0.0f , 0.0f , 1.0f , 0.0f,
+            pos_x, 0.0f , pos_z, 1.0f
+        };
 
-        float x = itr * (rand() % (int)(10) + (-10));
-        float y = 0.0f;
-        float z = itr * (rand() % (int)(10) + (-10));
-
-        model = glm::translate(model, glm::vec3(x, y, z));
-        matrices.emplace_back(model);
+        matrices.emplace_back(mat);
     }
 
     // Adding your vertex data in a new VBO
@@ -548,14 +415,16 @@ void GrassApplication::SetupInstanceMatrix(Mesh& mesh, int amount)
     vao.Bind();
     vbo.Bind();
 
-    glEnableVertexAttribArray(2);
-    glVertexAttribDivisor(2, 1);
     int location = 2; //TODO: Find your attribute location by name
     int offset = 0; // Data starts at the beginning of the buffer
     int stride = 4 * columnAttribute.GetSize(); // Each vertex data is one matrix apart from each other
     for (int i = 0; i < 4; ++i)
     {
+        // 
         vao.SetAttribute(location, columnAttribute, offset, stride);
+        glVertexAttribDivisor(location, 1);
+
+        //
         location++;
         offset += columnAttribute.GetSize();
     }

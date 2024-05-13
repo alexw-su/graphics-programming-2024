@@ -19,9 +19,9 @@ mat4 mvc = ViewProjMatrix * WorldMatrix;
 // Grass Uniforms
 uniform float bladeHeight; // height of a grass blade.
 uniform float time; // Time parameter for animation
-uniform sampler2D noise;
-uniform vec2 direction;
-uniform float strength;
+uniform sampler2D noise; // noise Pattern
+uniform vec2 direction; // direction of wind
+uniform float strength; // speed / strength of wind
 
 
 float GetNoiseValue(vec2 point)
@@ -38,8 +38,11 @@ void main()
 	Height = pos.y;
 	pos.y *= bladeHeight;
 
+	// Get position on noise pattern based on instancing
+	vec2 noisePos = (instanceMatrix * vec4(pos, 1.0)).xz;
+
 	// Setup Wind, using noise pattern, time, and strenght
-	NoiseValue = GetNoiseValue(VertexPosition.xz + time * strength);
+	NoiseValue = GetNoiseValue(noisePos + time * strength);
 	
 	// Add direction of wind
 	pos.xz += direction * NoiseValue * pos.y;

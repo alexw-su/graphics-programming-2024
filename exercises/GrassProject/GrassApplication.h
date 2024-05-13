@@ -35,11 +35,8 @@ private:
     void InitializeMeshes();
 
     void DrawObject(const Mesh& mesh, Material& material, const glm::mat4& worldMatrix);
+    void DrawObjectInstanced(const Mesh& mesh, Material& material, const glm::mat4& worldMatrix, int instanceCount);
 
-    void DrawObjectInstanced(const Mesh& mesh, Material& material, const glm::mat4& worldMatrix);
-
-    std::shared_ptr<Texture2DObject> CreateDefaultTexture();
-    std::shared_ptr<Texture2DObject> CreateHeightMap(unsigned int width, unsigned int height, glm::ivec2 coords);
     std::shared_ptr<Texture2DObject> LoadTexture(const char* path);
 
     void CreateTerrainMesh(Mesh& mesh, unsigned int gridX, unsigned int gridY);
@@ -67,37 +64,26 @@ private:
 
     // Camera controller parameters
     Camera m_camera;
+    glm::vec3 m_cameraPos;
 
     // Terrain
     Mesh m_terrainPatch;
 
-    std::shared_ptr<Material> m_defaultMaterial;
-    std::shared_ptr<Material> m_terrainMaterial00;
-    std::shared_ptr<Material> m_terrainMaterial10;
-    std::shared_ptr<Material> m_terrainMaterial01;
-    std::shared_ptr<Material> m_terrainMaterial11;
-    std::shared_ptr<Material> m_waterMaterial;
-
-    std::shared_ptr<Texture2DObject> m_defaultTexture;
-    std::shared_ptr<Texture2DObject> m_heightmapTexture00;
-    std::shared_ptr<Texture2DObject> m_heightmapTexture10;
-    std::shared_ptr<Texture2DObject> m_heightmapTexture01;
-    std::shared_ptr<Texture2DObject> m_heightmapTexture11;
+    std::shared_ptr<Material> m_terrainMaterial;
     std::shared_ptr<Texture2DObject> m_dirtTexture;
     std::shared_ptr<Texture2DObject> m_grassTexture;
-    std::shared_ptr<Texture2DObject> m_rockTexture;
-    std::shared_ptr<Texture2DObject> m_snowTexture;
-    std::shared_ptr<Texture2DObject> m_waterTexture;
 
     // Grass parameters
     Mesh m_grassBlade;
+
     std::shared_ptr<Material> m_grassMaterial;
+
     glm::vec4 m_baseGrassColor;
     glm::vec4 m_tipGrassColor;
     glm::vec2 m_windDirection;
     float m_windStrength;
     float m_bladeHeight;
+    int m_amount;
+
     std::shared_ptr<Texture2DObject> m_noisePattern;
-    glm::vec3 m_translations[100];
-    glm::mat4 m_matrices[100];
 };
